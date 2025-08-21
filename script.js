@@ -26,10 +26,15 @@
                     // Add fade-in animation (respects prefers-reduced-motion)
                     if (!prefersReducedMotion) {
                         entry.target.classList.add('fade-in');
+                        
+                        // Clean up will-change after animation completes
+                        setTimeout(() => {
+                            entry.target.classList.add('animation-complete');
+                        }, 600);
                     }
                     
-                    // Start number counter animations
-                    const numberElements = entry.target.querySelectorAll('[data-target]');
+                    // Start number counter animations for data-count elements
+                    const numberElements = entry.target.querySelectorAll('[data-count]');
                     numberElements.forEach(element => {
                         if (!numberCounters.has(element)) {
                             scheduleWork(() => animateNumber(element));
@@ -43,21 +48,27 @@
             });
         }, observerOptions);
 
-        // Observe sections
-        document.querySelectorAll('.section, .hero').forEach(section => {
-            animationObserver.observe(section);
+        // Observe sections and individual count elements
+        document.querySelectorAll('.section, .hero, [data-count]').forEach(element => {
+            animationObserver.observe(element);
         });
     }
 
     // Optimized number counter animation
     function animateNumber(element) {
-        const target = parseFloat(element.getAttribute('data-target'));
+        const target = parseFloat(element.getAttribute('data-count'));
         const duration = prefersReducedMotion ? 100 : 1500; // Faster for reduced motion
-        const frameRate = 1000 / 60; // 60 FPS
-        const increment = target / (duration / frameRate);
-        let current = 0;
+        const originalText = element.textContent;
+        
+        // Skip if element already animated or has no valid target
+        if (isNaN(target) || element.hasAttribute('data-animated')) {
+            return;
+        }
+        
+        element.setAttribute('data-animated', 'true');
         
         const startTime = performance.now();
+        let current = 0;
         
         function updateNumber(timestamp) {
             const elapsed = timestamp - startTime;
@@ -67,28 +78,43 @@
             const easedProgress = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
             current = target * easedProgress;
             
-            // Format number based on target value
+            // Format number based on target value and original content
             let displayValue;
             if (target === 3.7) {
-                displayValue = '$' + current.toFixed(1);
+                displayValue = '$' + current.toFixed(1) + 'B';
+            } else if (target >= 10000) {
+                displayValue = Math.floor(current).toLocaleString();
+            } else if (originalText.includes('+') && originalText.includes('%')) {
+                displayValue = '+' + Math.floor(current) + '%';
+            } else if (originalText.includes('–') || originalText.includes('-')) {
+                displayValue = Math.floor(current) + '–' + (Math.floor(current) + 1) + 'x';
+            } else if (originalText.includes('x')) {
+                displayValue = Math.floor(current) + 'x';
+            } else if (originalText.includes('%')) {
+                displayValue = Math.floor(current) + '%';
             } else if (target >= 1000) {
                 displayValue = Math.floor(current).toLocaleString();
-            } else if (element.textContent.includes('+')) {
-                displayValue = '+' + Math.floor(current) + '%';
             } else {
                 displayValue = Math.floor(current);
             }
             
             element.textContent = displayValue;
-            element.setAttribute('aria-live', 'polite'); // Announce changes to screen readers
             
             if (progress < 1) {
                 requestAnimationFrame(updateNumber);
             } else {
+                // Final cleanup and ensure exact target value
+                if (target === 3.7) {
+                    element.textContent = '$3.7B';
+                } else if (originalText.includes('5–6x') || originalText.includes('5-6x')) {
+                    element.textContent = '5–6x';
+                }
                 element.removeAttribute('aria-live');
             }
         }
         
+        // Start animation with screen reader announcement
+        element.setAttribute('aria-live', 'polite');
         requestAnimationFrame(updateNumber);
     }
 
@@ -215,43 +241,128 @@
         }, { passive: true });
     }
 
-    // Performance monitoring (Core Web Vitals)
+    // Enhanced Performance monitoring (Core Web Vitals)
     function initializePerformanceMonitoring() {
-        // Measure Largest Contentful Paint (LCP)
-        if ('PerformanceObserver' in window) {
-            try {
-                const po = new PerformanceObserver((entryList) => {
-                    const entries = entryList.getEntries();
-                    const lastEntry = entries[entries.length - 1];
-                    
-                    // Log LCP for debugging (remove in production)
-                    if (window.console && window.console.log) {
-                        console.log('LCP:', lastEntry.startTime);
-                    }
-                });
+        if (!('PerformanceObserver' in window)) return;
+        
+        const vitals = {};
+        
+        try {
+            // Measure Largest Contentful Paint (LCP) - target ≤ 2.5s
+            const lcpObserver = new PerformanceObserver((entryList) => {
+                const entries = entryList.getEntries();
+                const lastEntry = entries[entries.length - 1];
+                vitals.lcp = lastEntry.startTime;
                 
-                po.observe({ entryTypes: ['largest-contentful-paint'] });
-            } catch (e) {
-                // Silently handle browsers that don't support this
-            }
+                if (window.console && window.console.log) {
+                    console.log('🎯 LCP:', Math.round(vitals.lcp), 'ms', vitals.lcp <= 2500 ? '✅' : '⚠️');
+                }
+            });
+            lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+            
+            // Measure Cumulative Layout Shift (CLS) - target ≤ 0.1  
+            const clsObserver = new PerformanceObserver((entryList) => {
+                let clsValue = 0;
+                for (const entry of entryList.getEntries()) {
+                    if (!entry.hadRecentInput) {
+                        clsValue += entry.value;
+                    }
+                }
+                vitals.cls = (vitals.cls || 0) + clsValue;
+                
+                if (window.console && window.console.log) {
+                    console.log('🎯 CLS:', vitals.cls.toFixed(3), vitals.cls <= 0.1 ? '✅' : '⚠️');
+                }
+            });
+            clsObserver.observe({ entryTypes: ['layout-shift'] });
+            
+            // Measure First Input Delay (FID) / Interaction to Next Paint (INP) - target ≤ 200ms
+            const fidObserver = new PerformanceObserver((entryList) => {
+                for (const entry of entryList.getEntries()) {
+                    vitals.fid = entry.processingStart - entry.startTime;
+                    if (window.console && window.console.log) {
+                        console.log('🎯 FID:', Math.round(vitals.fid), 'ms', vitals.fid <= 100 ? '✅' : '⚠️');
+                    }
+                }
+            });
+            fidObserver.observe({ entryTypes: ['first-input'] });
+            
+        } catch (e) {
+            // Silently handle browsers that don't support these features
         }
+        
+        // Report vitals after page fully loaded
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (window.console && window.console.log && Object.keys(vitals).length > 0) {
+                    console.log('📊 Core Web Vitals Summary:', vitals);
+                }
+            }, 0);
+        });
     }
 
-    // Error handling and recovery
+    // Enhanced error handling and operational monitoring
     function initializeErrorHandling() {
+        const errors = [];
+        
         window.addEventListener('error', function(e) {
-            // Log error for debugging but don't break the experience
+            const errorInfo = {
+                message: e.message,
+                filename: e.filename,
+                lineno: e.lineno,
+                colno: e.colno,
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                url: window.location.href
+            };
+            
+            errors.push(errorInfo);
+            
+            // Log error for debugging
             if (window.console && window.console.error) {
-                console.error('JavaScript Error:', e.error);
+                console.error('🚨 JavaScript Error:', errorInfo);
             }
+            
+            // In production, you could send this to a monitoring service
+            // sendErrorToMonitoring(errorInfo);
         });
 
         window.addEventListener('unhandledrejection', function(e) {
-            // Handle promise rejections gracefully
+            const errorInfo = {
+                type: 'unhandledrejection',
+                reason: e.reason?.toString() || 'Unknown promise rejection',
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                url: window.location.href
+            };
+            
+            errors.push(errorInfo);
+            
             if (window.console && window.console.error) {
-                console.error('Unhandled Promise Rejection:', e.reason);
+                console.error('🚨 Unhandled Promise Rejection:', errorInfo);
             }
+            
+            // Prevent the default handling
+            e.preventDefault();
         });
+        
+        // Periodic health check and error reporting
+        setInterval(() => {
+            if (errors.length > 0) {
+                console.log('📊 Error Summary:', {
+                    totalErrors: errors.length,
+                    recentErrors: errors.slice(-5),
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }, 60000); // Every minute
+        
+        // Expose error monitoring for external tools
+        window.GinoSite.monitoring = {
+            getErrors: () => errors,
+            getErrorCount: () => errors.length,
+            clearErrors: () => { errors.length = 0; }
+        };
     }
 
     // Lazy loading for better performance
@@ -276,8 +387,9 @@
         }
     }
 
-    // Keyboard trap management for modal dialogs (if any)
-    function initializeKeyboardTraps() {
+    // Enhanced keyboard navigation and accessibility
+    function initializeKeyboardNavigation() {
+        // Handle escape key and other keyboard shortcuts
         document.addEventListener('keydown', function(e) {
             // Handle escape key for closing modals
             if (e.key === 'Escape') {
@@ -287,7 +399,65 @@
                     activeModal.setAttribute('aria-hidden', 'true');
                 }
             }
+            
+            // Skip links navigation (H key)
+            if (e.key === 'h' && e.altKey) {
+                e.preventDefault();
+                const skipLink = document.querySelector('.skip-link');
+                if (skipLink) {
+                    skipLink.focus();
+                }
+            }
+            
+            // Main navigation (M key)
+            if (e.key === 'm' && e.altKey) {
+                e.preventDefault();
+                const mainContent = document.querySelector('main');
+                if (mainContent) {
+                    mainContent.focus();
+                    mainContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
         });
+        
+        // Enhance section navigation for screen readers
+        document.querySelectorAll('section[aria-labelledby]').forEach((section, index) => {
+            section.setAttribute('tabindex', '-1');
+            
+            // Add keyboard shortcut hints for screen readers
+            const heading = section.querySelector('h2');
+            if (heading && index < 9) {
+                const shortcutHint = document.createElement('span');
+                shortcutHint.className = 'sr-only';
+                shortcutHint.textContent = ` (Alt+${index + 1} to jump to this section)`;
+                heading.appendChild(shortcutHint);
+                
+                // Add keyboard shortcut listener
+                document.addEventListener('keydown', function(e) {
+                    if (e.altKey && e.key === String(index + 1)) {
+                        e.preventDefault();
+                        section.focus();
+                        section.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'start' });
+                    }
+                });
+            }
+        });
+    }
+
+    // Announce page loaded for screen readers
+    function announcePageLoaded() {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.className = 'sr-only';
+        announcement.textContent = 'Gino Winnefeld portfolio page loaded successfully. Use Alt+H for navigation help, Alt+M for main content, or Alt+1-9 for sections.';
+        
+        document.body.appendChild(announcement);
+        
+        // Remove announcement after it's read
+        setTimeout(() => {
+            document.body.removeChild(announcement);
+        }, 5000);
     }
 
     // Initialize everything when DOM is ready
@@ -301,8 +471,9 @@
         scheduleWork(() => {
             createScrollProgress();
             initializeLazyLoading();
-            initializeKeyboardTraps();
+            initializeKeyboardNavigation();
             initializePerformanceMonitoring();
+            announcePageLoaded();
         });
 
         // Error handling
