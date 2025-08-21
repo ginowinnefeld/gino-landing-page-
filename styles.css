@@ -546,6 +546,40 @@ p {
     margin: 0;
 }
 
+/* FAQ Section */
+.faq-list {
+    max-width: 800px;
+    margin: 64px auto 0;
+    text-align: left;
+}
+
+.faq-list dt {
+    font-size: 20px;
+    font-weight: 700;
+    color: #000000;
+    margin: 48px 0 16px;
+    line-height: 1.4;
+    font-variation-settings: "opsz" 20;
+}
+
+.faq-list dt:first-child {
+    margin-top: 0;
+}
+
+.faq-list dd {
+    font-size: 18px;
+    color: #333333;
+    line-height: 1.6;
+    margin: 0 0 32px;
+    padding-left: 0;
+    font-variation-settings: "opsz" 18;
+}
+
+.faq-list strong {
+    color: #007AFF;
+    font-weight: 700;
+}
+
 /* About Section */
 .about-content {
     max-width: 600px;
