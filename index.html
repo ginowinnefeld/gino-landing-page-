@@ -202,6 +202,118 @@
 
     <!-- Main Content -->
     <main id="content" role="main">
+        <!-- ===== Analytics Section ===== -->
+        <section class="section container" aria-labelledby="analytics-title">
+          <h2 id="analytics-title">Traffic & Quality</h2>
+
+          <!-- KPI Row -->
+          <div class="kpi-row">
+            <div class="kpi-chip"><span class="kpi-val metrics mono" data-count="94400">94,400</span><span class="kpi-label">Visitors</span></div>
+            <div class="kpi-chip"><span class="kpi-val metrics mono">2.03M</span><span class="kpi-label">Page Views</span></div>
+            <div class="kpi-chip"><span class="kpi-val metrics mono">494k</span><span class="kpi-label">Sessions</span></div>
+            <div class="kpi-chip"><span class="kpi-val metrics mono">17m 19s</span><span class="kpi-label">Session Duration</span></div>
+            <div class="kpi-chip"><span class="kpi-val metrics mono">25%</span><span class="kpi-label">Bounce Rate</span></div>
+          </div>
+
+          <!-- Chart Card -->
+          <figure class="chart-card" role="img" aria-label="Unique visitors by month">
+            <canvas id="visitorsChart" height="240"></canvas>
+            <figcaption>Unique visitors, last 7 months.</figcaption>
+          </figure>
+        </section>
+
+        <!-- Section styles (match site aesthetic) -->
+        <style>
+          .kpi-row{
+            display:grid; gap:16px; grid-template-columns:repeat(5, minmax(140px,1fr));
+            margin:28px 0 20px;
+          }
+          @media (max-width: 960px){ .kpi-row{grid-template-columns:repeat(2,1fr)} }
+          .kpi-chip{
+            display:flex; align-items:baseline; gap:10px;
+            padding:14px 16px; border:1px solid #eee; border-radius:14px; background:#fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+          }
+          .kpi-val{ font-size:22px; font-weight:800; color:#007AFF }
+          .kpi-label{ font-size:14px; color:#4d4d4d }
+          .chart-card{
+            margin-top:18px; padding:16px; border:1px solid #eee; border-radius:22px; background:#fff;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+          }
+          .chart-card > canvas { border-radius:12px }
+        </style>
+
+        <!-- Chart.js CDN + config -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script>
+          const gridColor = '#eeeeee';
+          const textColor = '#4d4d4d';
+          const accent = '#007AFF';
+
+          const ctx = document.getElementById('visitorsChart').getContext('2d');
+          new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+              datasets: [{
+                label: 'Unique Visitors',
+                // Replace with real data if needed:
+                data: [0, 600, 5200, 35000, 12000, 11000, 48000],
+                borderColor: accent,
+                borderWidth: 3,
+                tension: 0.35,
+                pointRadius: 0,
+                fill: false
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  intersect: false,
+                  mode: 'index',
+                  backgroundColor: '#000',
+                  titleColor: '#fff',
+                  bodyColor: '#fff',
+                  padding: 10,
+                  displayColors: false,
+                  callbacks: { label: (ctx) => `${ctx.parsed.y.toLocaleString()} visitors` }
+                }
+              },
+              scales: {
+                x: { grid: { color: gridColor, drawTicks: false }, ticks: { color: textColor } },
+                y: {
+                  beginAtZero: true,
+                  grid: { color: gridColor, drawTicks: false },
+                  ticks: { color: textColor, callback: (v) => v >= 1000 ? (v/1000)+'k' : v }
+                }
+              }
+            }
+          });
+
+          // Count-up for KPI values (respects reduced motion)
+          (function(){
+            const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if(reduce) return;
+            const els = document.querySelectorAll('[data-count]');
+            const io = new IntersectionObserver(entries=>{
+              entries.forEach(e=>{
+                if(!e.isIntersecting) return;
+                const el = e.target, end = +el.dataset.count;
+                let n=0, step=Math.ceil(end/60);
+                const id=setInterval(()=>{
+                  n+=step; if(n>=end){n=end; clearInterval(id);}
+                  el.textContent=n.toLocaleString();
+                },16);
+                io.unobserve(el);
+              });
+            },{threshold:0.6});
+            els.forEach(el=>io.observe(el));
+          })();
+        </script>
+
         <!-- Case Study Intro Section -->
         <section class="section case-study-intro" aria-labelledby="case-study-title" role="region">
             <div class="container">
