@@ -173,40 +173,83 @@ p {
     font-weight: 300;
 }
 
-/* Hero highlights */
-.hero-highlights {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
-    margin-top: 64px;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
+/* Hero main layout with photo */
+.hero-main {
+    display: flex;
+    align-items: center;
+    gap: 64px;
+    margin-bottom: 96px;
 }
 
-.highlight-card {
-    background: #F2F2F7;
-    padding: 24px;
-    border-radius: 12px;
-    text-align: left;
+.hero-text {
+    flex: 1;
+    max-width: 600px;
 }
 
-.highlight-automation {
-    background: linear-gradient(135deg, #F2F2F7 0%, #E5E5EA 100%);
-    border: 1px solid #D1D1D6;
+.hero-photo {
+    flex-shrink: 0;
 }
 
-.highlight-card h3 {
-    font-size: 18px;
-    margin-bottom: 8px;
+.gino-photo {
+    width: 280px;
+    height: 280px;
+    border-radius: 24px;
+    object-fit: cover;
+    filter: grayscale(100%);
+    opacity: 0.9;
+    transition: all 0.3s ease;
+}
+
+.gino-photo:hover {
+    filter: grayscale(0%);
+    opacity: 1;
+    transform: scale(1.02);
+}
+
+/* Growth Approach Section */
+.growth-approach {
+    text-align: center;
+    margin-top: 96px;
+}
+
+.growth-approach h3 {
+    font-size: 32px;
+    font-weight: 700;
     color: #000000;
+    margin-bottom: 48px;
+    font-variation-settings: "opsz" 32;
 }
 
-.highlight-card p {
-    font-size: 16px;
+.approach-points {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 32px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.approach-point {
+    background: #F9F9F9;
+    padding: 32px 24px;
+    border-radius: 16px;
+    border: 1px solid #E5E5E7;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.approach-point:hover {
+    background: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.approach-point p {
+    font-size: 17px;
+    font-weight: 500;
     color: #333333;
+    line-height: 1.5;
     margin: 0;
-    line-height: 1.4;
+    font-variation-settings: "opsz" 17;
 }
 
 /* CTA Groups - repeated throughout */
@@ -268,6 +311,23 @@ p {
     padding: 8px 16px;
     font-size: 15px;
     min-width: 100px;
+}
+
+/* Case Study Intro */
+.case-study-intro {
+    background: #FBFBFD;
+    border-bottom: 1px solid #E5E5E7;
+}
+
+.case-study-description {
+    font-size: 24px;
+    color: #333333;
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.5;
+    max-width: 700px;
+    margin: 0 auto;
+    font-variation-settings: "opsz" 24;
 }
 
 /* Sections with 128px vertical rhythm */
@@ -713,10 +773,29 @@ p {
         display: none;
     }
     
-    .hero-highlights {
+    .hero-main {
+        flex-direction: column;
+        gap: 48px;
+        margin-bottom: 64px;
+        text-align: center;
+    }
+    
+    .hero-text {
+        max-width: 100%;
+    }
+    
+    .gino-photo {
+        width: 220px;
+        height: 220px;
+    }
+    
+    .approach-points {
         grid-template-columns: 1fr;
-        gap: 16px;
-        margin-top: 48px;
+        gap: 24px;
+    }
+    
+    .growth-approach h3 {
+        font-size: 28px;
     }
     
     .highlight-number {
