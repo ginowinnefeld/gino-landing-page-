@@ -206,51 +206,6 @@ p {
     transform: scale(1.02);
 }
 
-/* Growth Approach Section */
-.growth-approach {
-    text-align: center;
-    margin-top: 96px;
-}
-
-.growth-approach h3 {
-    font-size: 32px;
-    font-weight: 700;
-    color: #000000;
-    margin-bottom: 48px;
-    font-variation-settings: "opsz" 32;
-}
-
-.approach-points {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 32px;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-.approach-point {
-    background: #F9F9F9;
-    padding: 32px 24px;
-    border-radius: 16px;
-    border: 1px solid #E5E5E7;
-    text-align: left;
-    transition: all 0.2s ease;
-}
-
-.approach-point:hover {
-    background: #FFFFFF;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-}
-
-.approach-point p {
-    font-size: 17px;
-    font-weight: 500;
-    color: #333333;
-    line-height: 1.5;
-    margin: 0;
-    font-variation-settings: "opsz" 17;
-}
 
 /* CTA Groups - repeated throughout */
 .cta-group, .cta-mid, .final-cta {
@@ -787,15 +742,6 @@ p {
     .gino-photo {
         width: 220px;
         height: 220px;
-    }
-    
-    .approach-points {
-        grid-template-columns: 1fr;
-        gap: 24px;
-    }
-    
-    .growth-approach h3 {
-        font-size: 28px;
     }
     
     .highlight-number {
